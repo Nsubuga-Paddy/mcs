@@ -1,0 +1,378 @@
+:root {
+    --primary-orange: #ff6b00;
+    --secondary-orange: #ff8533;
+    --light-orange: #fff0e6;
+}
+
+/* Navbar Styles */
+.navbar {
+    background-color: var(--primary-orange) !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,.1);
+}
+
+/* Sidebar Styles */
+.sidebar {
+    position: fixed;
+    top: 56px; /* Height of navbar */
+    bottom: 0;
+    left: 0;
+    z-index: 100;
+    padding: 0;
+    box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+    background-color: var(--light-orange);
+    width: 250px;
+}
+
+.sidebar .nav-link {
+    padding: 1rem;
+    font-weight: 500;
+    color: #333;
+    display: flex;
+    align-items: center;
+}
+
+.sidebar .nav-link:hover {
+    background-color: var(--secondary-orange);
+    color: white;
+}
+
+.sidebar .nav-link.active {
+    background-color: var(--primary-orange);
+    color: white;
+}
+
+/* Main Content Styles */
+.main-content {
+    margin-left: 250px;
+    padding: 20px;
+    transition: margin-left 0.3s ease-in-out;
+}
+
+/* Card Styles */
+.card {
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    border: none;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.card-header {
+    background-color: var(--light-orange);
+    border-bottom: 2px solid var(--primary-orange);
+    font-weight: bold;
+}
+
+/* Button Styles */
+.btn-primary {
+    background-color: var(--primary-orange);
+    border-color: var(--primary-orange);
+}
+
+.btn-primary:hover {
+    background-color: var(--secondary-orange);
+    border-color: var(--secondary-orange);
+}
+
+/* Progress Bar Styles */
+.progress {
+    background-color: var(--light-orange);
+    border-radius: 10px;
+}
+
+.progress-bar {
+    background-color: var(--primary-orange);
+    border-radius: 10px;
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 991.98px) {
+    .sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease-in-out;
+    }
+    
+    .sidebar.show {
+        transform: translateX(0);
+    }
+
+    .main-content {
+        margin-left: 0;
+    }
+    
+    .sidebar-overlay.show {
+        display: block;
+    }
+}
+
+/* Sidebar Toggle Button */
+.sidebar-toggler {
+    padding: .25rem .75rem;
+    font-size: 1.25rem;
+    background-color: transparent;
+    border: 1px solid rgba(255,255,255,.1);
+    color: white;
+}
+
+.sidebar-toggler:hover {
+    background-color: rgba(255,255,255,.1);
+}
+
+/* Overlay */
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 56px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0,0,0,0.5);
+    z-index: 99;
+}
+
+/* Table Styles */
+.table > :not(caption) > * > * {
+    padding: 1rem 0.75rem;
+}
+
+.table-hover tbody tr:hover {
+    background-color: var(--light-orange);
+}
+
+/* Add these styles to your existing styles.css */
+
+/* General Layout Fixes */
+html, body {
+    height: 100%;
+    overflow-x: hidden; /* Prevent horizontal scrolling */
+}
+
+/* Container Fixes */
+.container-fluid {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+/* Main Content Refinements */
+.main-content {
+    margin-left: 250px;
+    padding: 20px;
+    transition: margin-left 0.3s ease-in-out;
+    width: calc(100% - 250px); /* Ensure content width accounts for sidebar */
+    min-height: calc(100vh - 56px); /* Full height minus navbar */
+}
+
+/* Table Responsiveness Improvements */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-bottom: 1rem;
+    /* Prevent horizontal scrollbar when not needed */
+    scrollbar-width: thin;
+}
+
+/* Card Grid Improvements */
+.row.g-3 {
+    --bs-gutter-x: 1rem;
+    --bs-gutter-y: 1rem;
+    margin-right: calc(var(--bs-gutter-x) * -0.5);
+    margin-left: calc(var(--bs-gutter-x) * -0.5);
+}
+
+.card {
+    height: 100%; /* Ensure equal height cards */
+    min-width: 0; /* Prevent card overflow */
+}
+
+/* Improved Mobile Responsiveness */
+@media (max-width: 991.98px) {
+    .main-content {
+        margin-left: 0;
+        width: 100%;
+        padding: 15px;
+    }
+
+    .sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease-in-out;
+        width: 250px;
+    }
+    
+    .sidebar.show {
+        transform: translateX(0);
+    }
+
+    /* Adjust card spacing on mobile */
+    .row.g-3 > [class*='col-'] {
+        padding-right: calc(var(--bs-gutter-x) * 0.5);
+        padding-left: calc(var(--bs-gutter-x) * 0.5);
+    }
+}
+
+/* Medium Screen Adjustments */
+@media (min-width: 992px) and (max-width: 1199.98px) {
+    .card-body {
+        padding: 1rem;
+    }
+
+    .card-title {
+        font-size: 1.25rem;
+    }
+}
+
+/* Small Screen Adjustments */
+@media (max-width: 767.98px) {
+    .card {
+        margin-bottom: 1rem;
+    }
+
+    .table-responsive {
+        margin-left: -15px;
+        margin-right: -15px;
+        padding: 0 15px;
+    }
+
+    /* Adjust table font size for mobile */
+    .table {
+        font-size: 0.875rem;
+    }
+
+    /* Stack table header text on mobile */
+    .table thead th {
+        white-space: normal;
+    }
+}
+
+/* Extra Small Screen Adjustments */
+@media (max-width: 575.98px) {
+    .main-content {
+        padding: 10px;
+    }
+
+    .card-header {
+        padding: 0.75rem;
+    }
+
+    /* Adjust button size on mobile */
+    .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
+
+    /* Make cards full width on very small screens */
+    .col-md-3 {
+        width: 100%;
+    }
+}
+
+/* Print Media Query */
+@media print {
+    .sidebar, .navbar {
+        display: none;
+    }
+
+    .main-content {
+        margin-left: 0;
+        width: 100%;
+    }
+}
+
+/* Custom Scrollbar for Better UX */
+.table-responsive::-webkit-scrollbar {
+    height: 6px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+    background: var(--light-orange);
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+    background: var(--primary-orange);
+    border-radius: 3px;
+}
+
+/* Fix for Safari */
+@supports (-webkit-overflow-scrolling: touch) {
+    .table-responsive {
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* Performance Optimizations */
+.card, .sidebar, .main-content {
+    will-change: transform;
+    backface-visibility: hidden;
+}
+
+/* Accessibility Improvements */
+.nav-link:focus {
+    outline: 2px solid var(--primary-orange);
+    outline-offset: -2px;
+}
+
+.table-hover tbody tr:hover {
+    background-color: var(--light-orange);
+    cursor: pointer;
+}
+
+/* Loading State */
+.card.loading {
+    position: relative;
+    overflow: hidden;
+}
+
+.card.loading::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.2),
+        transparent
+    );
+    animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+/* Add to your existing styles.css */
+
+/* Avatar Circle */
+.avatar-circle {
+    width: 32px;
+    height: 32px;
+    background-color: var(--primary-orange);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+/* Search Input Styling */
+.input-group .form-control:focus {
+    border-color: var(--primary-orange);
+    box-shadow: 0 0 0 0.2rem rgba(255, 107, 0, 0.25);
+}
+
+/* Table Cell Alignment */
+.table td {
+    vertical-align: middle;
+}
+
+/* Progress Bar in Table */
+.table .progress {
+    min-width: 100px;
+}

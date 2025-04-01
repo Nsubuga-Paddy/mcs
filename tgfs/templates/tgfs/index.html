@@ -1,0 +1,213 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Mushanapp</title>
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <!-- Font Awesome -->
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+      rel="stylesheet"
+    />
+    <!-- Landing Page CSS -->
+    <link href="{% static 'tgfs/css/landing.css' %}" rel="stylesheet" />
+  </head>
+  <body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+      <div class="container">
+        <a class="navbar-brand" href="{% url 'tgfs:index' %}">
+          <img
+            src="{% static 'tgfs/images/tgfs.png' %}"
+            alt="MCS Logo"
+            height="40"
+            class="d-inline-block align-text-top me-2"
+          />
+        </a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+          aria-controls="navbarNav"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div
+          class="collapse navbar-collapse justify-content-end"
+          id="navbarNav"
+        >
+          <div class="navbar-nav">
+            {% if user.is_authenticated %}
+            <div class="container-fluid">
+              <div class="ms-auto me-3">
+                <div class="dropdown">
+                  <a
+                    class="nav-link dropdown-toggle text-white"
+                    href="#"
+                    role="button"
+                    data-bs-toggle="dropdown"
+                  >
+                    <span id="userName"
+                      >{% if user.first_name %}{{ user.first_name }}{% else %}{{
+                      user.username }}{% endif %}</span
+                    >
+                  </a>
+                  <ul class="dropdown-menu dropdown-menu-end">
+                    <li>
+                      <form
+                        action="{% url 'tgfs:logout' %}"
+                        method="post"
+                        class="dropdown-item p-0"
+                      >
+                        {% csrf_token %}
+                        <button type="submit" class="dropdown-item">
+                          Logout
+                        </button>
+                      </form>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            {% else %}
+            <a href="{% url 'tgfs:login' %}" class="btn btn-outline-light me-2"
+              >Login</a
+            >
+            <a href="{% url 'tgfs:signup' %}" class="btn btn-primary"
+              >Sign Up</a
+            >
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    {% if messages %}
+    <div class="container mt-3">
+      {% for message in messages %}
+      <div
+        class="alert alert-{{ message.tags }} alert-dismissible fade show"
+        role="alert"
+      >
+        {{ message }}
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="alert"
+          aria-label="Close"
+        ></button>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Hero Section -->
+    <header class="hero-section">
+      <div class="container">
+        <div class="row justify-content-center text-center">
+          <div class="col-lg-8">
+            <h1 class="display-4 fw-bold">Welcome to TGF's Platform</h1>
+            <p class="lead">
+              Access the Target Group Financial services through our unified
+              platform.
+            </p>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Projects Grid -->
+    <section class="projects-section">
+      <div class="container">
+        <h2 class="section-title text-center mb-5">TGF Groups</h2>
+        <div class="row g-4">
+          <!-- MCS-TGFS Project -->
+          <div class="col-md-4">
+            <div class="project-card" data-project="tgfs">
+              <div class="project-icon">
+                <i class="fas fa-calculator"></i>
+                <i class="fas fa-money-bill-wave ms-1"></i>
+              </div>
+              <h3>52-WSC</h3>
+              <p>52 Weeks Saving Challenge</p>
+              <a
+                href="{% url 'tgfs:login' %}?next={% url 'tgfs:dashboard' %}"
+                class="btn btn-primary"
+                >Access Project</a
+              >
+            </div>
+          </div>
+
+          <!-- Mushana Finance Services -->
+          <div class="col-md-4">
+            <div class="project-card" data-project="finance">
+              <div class="project-icon">
+                <i class="fas fa-user-clock"></i>
+              </div>
+              <h3>RSS</h3>
+              <p>Retirement Savings Scheme</p>
+              <a
+                href="{% url 'tgfs:login' %}?next={% url 'tgfs:dashboard' %}"
+                class="btn btn-primary"
+                >Access Project</a
+              >
+            </div>
+          </div>
+
+          <!-- Real Estate Projects -->
+          <div class="col-md-4">
+            <div class="project-card" data-project="realestate">
+              <div class="project-icon">
+                <i class="fas fa-hand-holding-heart"></i>
+                <i class="fas fa-chart-line ms-1"></i>
+              </div>
+              <h3>GWC</h3>
+              <p>Generational Wealth Creation</p>
+              <a
+                href="{% url 'login' %}?next={% url 'tgfs:dashboard' %}"
+                class="btn btn-primary"
+                >Access Project</a
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="container">
+        <div class="row">
+          <div class="col-md-6">
+            <p>
+              &copy; 2024 Mushana Multipurpose Corporative Society. All rights
+              reserved.
+            </p>
+          </div>
+          <div class="col-md-6 text-md-end">
+            <a href="#" class="text-white me-3">Privacy Policy</a>
+            <a href="#" class="text-white">Contact Us</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Landing Page JS -->
+    <script src="{% static 'tgfs/js/landing.js' %}"></script>
+  </body>
+</html>

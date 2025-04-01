@@ -1,0 +1,283 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MCS-TGFs Dashboard</title>
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <!-- Font Awesome -->
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+      rel="stylesheet"
+    />
+    <!-- Existing meta tags -->
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <!-- Prevent content jumping -->
+    <meta name="theme-color" content="#ff6b00" />
+    <!-- Add favicon for professional look -->
+    <link rel="icon" type="image/png" href="favicon.png" />
+    <!-- Custom CSS -->
+    <link href="{% static 'tgfs/css/styles.css' %}" rel="stylesheet" />
+  </head>
+  <body>
+    <!-- Sticky Header -->
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+      <div class="container-fluid">
+        <!-- Mobile Toggle Button -->
+        <button class="navbar-toggler sidebar-toggler d-lg-none" type="button">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <a class="navbar-brand" href="{% url 'tgfs:index' %}">
+          <img
+            src="{% static 'tgfs/images/tgfs.png' %}"
+            alt="MCS Logo"
+            height="40"
+            class="d-inline-block align-text-top me-2"
+          />
+        </a>
+
+        <!-- User Dropdown -->
+        <div class="ms-auto me-3">
+          <div class="dropdown">
+            <a
+              class="nav-link dropdown-toggle text-white"
+              href="#"
+              role="button"
+              data-bs-toggle="dropdown"
+            >
+              <span id="userName">
+                {% if request.user.first_name %} {{ request.user.first_name }}
+                {% else %} {{ request.user.username }} {% endif %}
+              </span>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li>
+                <form
+                  action="{% url 'tgfs:logout' %}"
+                  method="post"
+                  class="dropdown-item p-0"
+                  onsubmit="return confirm('Are you sure you want to log out?');"
+                >
+                  {% csrf_token %}
+                  <button type="submit" class="dropdown-item">Logout</button>
+                </form>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container-fluid">
+      <div class="row">
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+          <div class="d-flex flex-column">
+            <ul class="nav flex-column">
+              <li class="nav-item">
+                <a class="nav-link active" href="{% url 'tgfs:dashboard' %}">
+                  <i class="fas fa-home me-2"></i>TGFs Dashboard
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="{% url 'tgfs:member_dashboard' %}">
+                  <i class="fas fa-wallet me-2"></i>My TGFs Savings
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="{% url 'tgfs:members' %}">
+                  <i class="fas fa-users me-2"></i>TGFs Members
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Main Content -->
+        <main class="main-content">
+          <div class="container-fluid px-4">
+            <h2 class="mb-4">Group Overview</h2>
+
+            <!-- Overview Cards -->
+            <div class="row g-3 my-2">
+              <div class="col-md-3">
+                <div class="card">
+                  <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">
+                      Total Amount Saved
+                    </h6>
+                    <h3 class="card-title" id="totalGroupSavings">UGX 0</h3>
+                    <div class="progress mt-2" style="height: 5px">
+                      <div class="progress-bar" style="width: 70%"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="card">
+                  <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">
+                      Total Amount Invested
+                    </h6>
+                    <h3 class="card-title" id="totalInvested">UGX 0</h3>
+                    <small class="text-success">+30% Interest Rate</small>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="card">
+                  <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">
+                      Uninvested Amount
+                    </h6>
+                    <h3 class="card-title" id="uninvestedAmount">UGX 0</h3>
+                    <small class="text-muted">Pending Investment</small>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="card">
+                  <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">
+                      Interest Gained
+                    </h6>
+                    <h3 class="card-title" id="interestGained">UGX 0</h3>
+                    <small class="text-success">8 Months Maturity</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Investment Pools Table -->
+            <div class="row mt-4">
+              <div class="col-12">
+                <div class="card">
+                  <div
+                    class="card-header d-flex justify-content-between align-items-center"
+                  >
+                    <span>Investment Pools Overview</span>
+                    <button class="btn btn-primary btn-sm">
+                      Export Investment Report
+                    </button>
+                  </div>
+                  <div class="card-body">
+                    <div class="table-responsive">
+                      <table
+                        class="table table-hover"
+                        id="investmentPoolsTable"
+                      >
+                        <thead>
+                          <tr>
+                            <th>Investment Date</th>
+                            <th>Amount Invested</th>
+                            <th>Members Included</th>
+                            <th>Interest Earned</th>
+                            <th>Maturity Date</th>
+                            <th>Status</th>
+                          </tr>
+                        </thead>
+                        <tbody id="investmentPoolsBody">
+                          <tr>
+                            <td colspan="6" class="text-center">
+                              No investment pools found
+                            </td>
+                          </tr>
+                        </tbody>
+                        <tfoot>
+                          <tr class="table-light">
+                            <td><strong>Totals</strong></td>
+                            <td>UGX 0</td>
+                            <td>-</td>
+                            <td>UGX 0</td>
+                            <td>-</td>
+                            <td>-</td>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Weekly Group Savings Table -->
+            <div class="row mt-4">
+              <div class="col-12">
+                <div class="card">
+                  <div
+                    class="card-header d-flex justify-content-between align-items-center"
+                  >
+                    <span>Weekly Group Savings</span>
+                    <button class="btn btn-primary btn-sm">
+                      Export Report
+                    </button>
+                  </div>
+                  <div class="card-body">
+                    <div class="table-responsive">
+                      <table class="table table-hover" id="weeklySavingsTable">
+                        <thead>
+                          <tr>
+                            <th>Week</th>
+                            <th>Total Amount</th>
+                            <th>Members Contributed</th>
+                            <th>Status</th>
+                            <th>Investment Status</th>
+                          </tr>
+                        </thead>
+                        <tbody id="weeklySavingsBody"></tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Members Overview -->
+            <div class="row mt-4 mb-4">
+              <div class="col-12">
+                <div class="card">
+                  <div class="card-header">Members Overview</div>
+                  <div class="card-body">
+                    <div class="table-responsive">
+                      <table class="table table-hover" id="membersTable">
+                        <thead>
+                          <tr>
+                            <th>Member Name</th>
+                            <th>Total Savings</th>
+                            <th>Weeks Covered</th>
+                            <th>Progress</th>
+                            <th>Last Contribution</th>
+                          </tr>
+                        </thead>
+                        <tbody id="membersTableBody"></tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
+    <script src="{% static 'tgfs/js/script.js' %}"></script>
+    <script>
+      window.dashboardData = {{ dashboard_data|safe }};
+    </script>
+  </body>
+</html>
