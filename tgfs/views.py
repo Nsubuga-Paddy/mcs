@@ -106,51 +106,31 @@ def evaluate_deposit(deposit, current_week, carry_forward):
         'remaining_balance': balance
     }
 
+
+
 def process_user_deposit(user_profile, deposit_amount):
-    """Process a user's deposit and return the result"""
-    # Get the latest transaction to determine current state
     latest_txn = SavingsTransaction.objects.filter(
         user_profile=user_profile
     ).order_by('-date_saved').first()
 
-    # Initialize current state
     if latest_txn:
-        current_week = latest_txn.next_week  # Get next week from last transaction
-        carry_forward = float(latest_txn.remaining_balance)  # Get remaining balance from last transaction
+        current_week = latest_txn.next_week
+        carry_forward = float(latest_txn.remaining_balance)
+        cumulative_total = float(latest_txn.cumulative_total) + deposit_amount
     else:
-        # For first-time deposit
-        current_week = 1  # Start with week 1
-        carry_forward = 0  # No previous balance
+        current_week = 1
+        carry_forward = 0
+        cumulative_total = deposit_amount
 
-    # Print debug information
-    print(f"Processing deposit of {deposit_amount}")
-    print(f"Current week: {current_week}")
-    print(f"Carry forward: {carry_forward}")
-
-    # Evaluate the deposit using progressive logic
     result = evaluate_deposit(deposit_amount, current_week, carry_forward)
 
-    print("Evaluation result:")
-    print(f"Weeks covered: {result['fully_covered_weeks']}")
-    print(f"Next week: {result['next_week']}")
-    print(f"Remaining balance: {result['remaining_balance']}")
+    result.update({
+        'cumulative_total': cumulative_total
+    })
 
-    # Calculate cumulative total
-    cumulative_total = (float(latest_txn.cumulative_total) if latest_txn else 0) + deposit_amount
-
-    # Create new transaction record with results
-    transaction = SavingsTransaction.objects.create(
-        user_profile=user_profile,
-        amount=deposit_amount,
-        cumulative_total=cumulative_total,
-        fully_covered_weeks=result['fully_covered_weeks'],
-        next_week=result['next_week'],
-        remaining_balance=result['remaining_balance']
-    )
-
-    # Add cumulative_total to the result dictionary
-    result['cumulative_total'] = cumulative_total
     return result
+
+
 
 @login_required
 def member_dashboard_view(request):

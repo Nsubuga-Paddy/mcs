@@ -106,5 +106,7 @@ class SavingsTransactionAdmin(admin.ModelAdmin):
             obj.next_week = result['next_week']
             obj.remaining_balance = result['remaining_balance']
             obj.cumulative_total = result['cumulative_total']
-        
+
         super().save_model(request, obj, form, change)
+        
+       
