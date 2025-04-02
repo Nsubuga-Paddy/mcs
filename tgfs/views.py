@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.forms import AuthenticationForm
-from .forms import SignUpForm
+from .forms import SignUpForm, CustomAuthenticationForm
 from .models import SavingsTransaction, UserProfile
 from django.db.models import Max, Sum
 import json
@@ -25,7 +25,7 @@ def signup_view(request):
         form = SignUpForm(request.POST)
         if form.is_valid():
             user = form.save()
-            login(request, user)
+            messages.success(request, "Signup successful. Please wait for an admin to approve your account.")
             return redirect("tgfs:login")
     else:
         form = SignUpForm()
@@ -34,16 +34,17 @@ def signup_view(request):
 
 def login_view(request):
     if request.method == "POST":
-        form = AuthenticationForm(request, data=request.POST)
+        form = CustomAuthenticationForm(request, data=request.POST)
         if form.is_valid():
             user = form.get_user()
             login(request, user)
             messages.success(request, "Login successful.")
             return redirect("tgfs:dashboard")
         else:
-            messages.error(request, "Invalid username or password. Please try again.")
+
+           pass
     else:
-        form = AuthenticationForm()
+        form = CustomAuthenticationForm()
     return render(request, "tgfs/login.html", {"form": form})
 
 

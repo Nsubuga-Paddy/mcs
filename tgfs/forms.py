@@ -3,6 +3,12 @@ from django.contrib.auth.models import User
 from .models import UserProfile
 from phonenumber_field.formfields import PhoneNumberField
 
+
+from django.contrib.auth.forms import AuthenticationForm
+from django.utils.translation import gettext_lazy as _
+from django.core.exceptions import ValidationError
+
+
 class SignUpForm(forms.ModelForm):
     first_name = forms.CharField(max_length=30, required=True)
     last_name = forms.CharField(max_length=30, required=True)
@@ -25,7 +31,17 @@ class SignUpForm(forms.ModelForm):
     def save(self, commit=True):
         user = super().save(commit=False)
         user.set_password(self.cleaned_data["password1"])
+        user.is_active = False
         if commit:
             user.save()
             UserProfile.objects.create(user=user,whatsapp_number=self.cleaned_data["whatsapp_number"])
         return user
+
+
+class CustomAuthenticationForm(AuthenticationForm):
+    def confirm_login_allowed(self, user):
+        if not user.is_active:
+            raise ValidationError(
+                _("Your account is pending approval by an admin."),
+                code='inactive',
+            )
