@@ -64,7 +64,7 @@ class SavingsTransactionAdmin(admin.ModelAdmin):
     autocomplete_fields = ('user_profile',)
     
     readonly_fields = ('cumulative_total', 'fully_covered_weeks', 'next_week', 
-                      'remaining_balance', 'date_saved')
+                      'remaining_balance')
 
     def formatted_amount(self, obj):
         return f"UGX {obj.amount:,.0f}" if obj.amount else "UGX 0"
