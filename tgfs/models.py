@@ -26,7 +26,6 @@ class SavingsTransaction(models.Model):
     user_profile = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='savings_transactions')
     amount = models.PositiveIntegerField(default=0)
     date_saved = models.DateTimeField(auto_now_add=True)
-    #date_saved = models.DateTimeField(auto_now_add=True)
     date_saved = models.DateTimeField(default=timezone.now)
 
     cumulative_total = models.DecimalField(max_digits=10, decimal_places=2, default=0)
