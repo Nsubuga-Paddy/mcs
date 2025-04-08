@@ -28,6 +28,18 @@
     <link rel="icon" type="image/png" href="favicon.png" />
     <!-- Custom CSS -->
     <link href="{% static 'tgfs/css/styles.css' %}" rel="stylesheet" />
+
+    <!-- DataTables CSS -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css"
+    />
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- DataTables JS -->
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
   </head>
   <body>
     <!-- Sticky Header -->
@@ -312,6 +324,16 @@
                 </div>
               </div>
             </div>
+
+            <script>
+              document.addEventListener("DOMContentLoaded", function () {
+                $("#savingsHistoryTable").DataTable({
+                  pageLength: 5, // or 10
+                  lengthChange: false,
+                  ordering: false, // optional: disable sorting
+                });
+              });
+            </script>
 
             <!-- Add this temporarily for debugging -->
             <div class="d-none">

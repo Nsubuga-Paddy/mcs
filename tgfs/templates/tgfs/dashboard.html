@@ -28,6 +28,18 @@
     <link rel="icon" type="image/png" href="favicon.png" />
     <!-- Custom CSS -->
     <link href="{% static 'tgfs/css/styles.css' %}" rel="stylesheet" />
+
+    <!-- DataTables CSS -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css"
+    />
+
+    <!-- jQuery (required by DataTables) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- DataTables JS -->
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
   </head>
   <body>
     <!-- Sticky Header -->
@@ -243,30 +255,49 @@
               </div>
             </div>
 
-            <!-- Members Overview -->
-            <div class="row mt-4 mb-4">
-              <div class="col-12">
-                <div class="card">
-                  <div class="card-header">Members Overview</div>
-                  <div class="card-body">
-                    <div class="table-responsive">
-                      <table class="table table-hover" id="membersTable">
-                        <thead>
-                          <tr>
-                            <th>Member Name</th>
-                            <th>Total Savings</th>
-                            <th>Weeks Covered</th>
-                            <th>Progress</th>
-                            <th>Last Contribution</th>
-                          </tr>
-                        </thead>
-                        <tbody id="membersTableBody"></tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <script>
+              document.addEventListener("DOMContentLoaded", function () {
+                fetch("{% url 'tgfs:weekly_savings_data' %}")
+                  .then((response) => response.json())
+                  .then((data) => {
+                    const tableBody =
+                      document.getElementById("weeklySavingsBody");
+                    tableBody.innerHTML = ""; // Clear existing rows
+
+                    data.data.forEach((row) => {
+                      const tr = document.createElement("tr");
+
+                      tr.innerHTML = `
+                        <td data-order="${row.week}">Week ${row.week}</td>
+                        <td>${row.total_amount}</td>
+                        <td>${row.members_contributed}</td>
+                        <td><span class="badge bg-${
+                          row.status === "Complete" ? "success" : "warning"
+                        }">${row.status}</span></td>
+                        <td><span class="badge bg-${
+                          row.investment_status === "Invested"
+                            ? "info"
+                            : "secondary"
+                        }">${row.investment_status}</span></td>
+                      `;
+
+                      tableBody.appendChild(tr);
+                    });
+
+                    // Initialize DataTables (after content is rendered)
+                    setTimeout(() => {
+                      $("#weeklySavingsTable").DataTable({
+                        pageLength: 5,
+                        lengthChange: false,
+                        destroy: true,
+                      });
+                    }, 100);
+                  })
+                  .catch((error) => {
+                    console.error("Error loading weekly savings data:", error);
+                  });
+              });
+            </script>
           </div>
         </main>
       </div>

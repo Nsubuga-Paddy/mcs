@@ -5,7 +5,7 @@ from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.forms import AuthenticationForm
 from .forms import SignUpForm, CustomAuthenticationForm
 from .models import SavingsTransaction, UserProfile
-from django.db.models import Max, Sum
+from django.db.models import Max, Sum, Count, Q
 import json
 from django.core.paginator import Paginator
 from django.views.decorators.csrf import csrf_protect
@@ -13,8 +13,9 @@ from django.utils.safestring import mark_safe
 from django.db import models
 from decimal import Decimal
 import csv
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from datetime import datetime
+from django.utils.timezone import localtime
 
 def index(request):
     return render(request, 'tgfs/index.html')
@@ -247,3 +248,118 @@ def download_savings(request):
         ])
 
     return response
+
+
+@login_required
+def weekly_group_savings_data(request):
+    weekly_data = []
+    weekly_targets = get_weekly_targets()  # [10000, 20000, ..., 520000]
+
+    for week_number in range(1, 53):
+        week_target = weekly_targets[week_number - 1]
+
+        # Get unique user_profiles who fully covered this week
+        covered_users = SavingsTransaction.objects.filter(
+            fully_covered_weeks__contains=[week_number]
+        ).values('user_profile').distinct()
+
+        member_count = covered_users.count()
+        expected_total = member_count * week_target
+
+        status = "Complete" if member_count >= 10 else "Pending"
+        investment_status = "Invested" if expected_total >= 25000000 else "Not Yet"
+
+        weekly_data.append({
+            'week': week_number,
+            'total_amount': f"UGX {expected_total:,.0f}",
+            'members_contributed': member_count,
+            'status': status,
+            'investment_status': investment_status
+        })
+
+    return JsonResponse({'data': weekly_data})
+
+
+
+@login_required
+def search_members(request):
+    query = request.GET.get('q', '').strip()
+    results = []
+
+    if query:
+        profiles = UserProfile.objects.filter(
+            Q(user__username__icontains=query) |
+            Q(user__first_name__icontains=query) |
+            Q(user__last_name__icontains=query) |
+            Q(whatsapp_number__icontains=query)
+        ).select_related('user')[:10]
+
+        for profile in profiles:
+            transactions = SavingsTransaction.objects.filter(
+                user_profile=profile
+            ).order_by('-date_saved')
+
+            latest_txn = transactions.first()
+            total_saved = float(latest_txn.cumulative_total) if latest_txn else 0
+            fully_covered_weeks = latest_txn.fully_covered_weeks if latest_txn else []
+            last_contribution = localtime(latest_txn.date_saved).strftime('%b %d, %Y') if latest_txn else "N/A"
+            progress = round((total_saved / 13780000) * 100, 2) if total_saved else 0
+
+            results.append({
+                'member_name': f"{profile.user.first_name} {profile.user.last_name}",
+                'total_savings': f"UGX {total_saved:,.0f}",
+                'weeks_covered': len(fully_covered_weeks),
+                'progress': f"{progress}%",
+                'last_contribution': last_contribution,
+                'status': "Verified" if profile.is_verified else "Pending"
+            })
+
+
+    return JsonResponse({'results': results})
+
+
+@login_required
+def all_members_data(request):
+    profiles = UserProfile.objects.select_related('user')
+    total_members = profiles.count()
+
+    results = []
+    total_savings = 0
+    total_weeks_covered = 0
+
+    for profile in profiles:
+        transactions = SavingsTransaction.objects.filter(
+            user_profile=profile
+        ).order_by('-date_saved')
+
+        latest_txn = transactions.first()
+        total_saved = float(latest_txn.cumulative_total) if latest_txn else 0
+        fully_covered_weeks = latest_txn.fully_covered_weeks if latest_txn else []
+
+        total_savings += total_saved
+        total_weeks_covered += len(fully_covered_weeks)
+
+        results.append({
+            'member_name': f"{profile.user.first_name} {profile.user.last_name}",
+            'total_savings': f"UGX {total_saved:,.0f}",
+            'weeks_covered': len(fully_covered_weeks),
+            'progress': f"{round((total_saved / 13780000) * 100, 2)}%",
+            'last_contribution': latest_txn.date_saved.strftime('%b %d, %Y') if latest_txn else "N/A",
+            'status': "Verified" if profile.is_verified else "Pending"
+        })
+
+    # Calculate averages
+    average_savings = round(total_savings / total_members, 2) if total_members else 0
+    average_weeks = round(total_weeks_covered / total_members, 2) if total_members else 0
+
+    return JsonResponse({
+        'results': results,
+        'stats': {
+            'total_members': total_members,
+            'average_savings': average_savings,
+            'average_weeks': average_weeks
+        }
+    })
+
+
+

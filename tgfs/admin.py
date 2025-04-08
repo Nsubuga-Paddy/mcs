@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User
+from django.db.models import Sum
 from .models import UserProfile, SavingsTransaction
 from django.utils.html import format_html
 
@@ -16,6 +17,17 @@ class CustomUserAdmin(UserAdmin):
 
 admin.site.unregister(User)
 admin.site.register(User, CustomUserAdmin)
+
+
+class SavingsTransactionInline(admin.TabularInline):
+    model = SavingsTransaction
+    extra = 0
+    readonly_fields = ('amount', 'cumulative_total', 'fully_covered_weeks', 
+                       'next_week', 'remaining_balance', 'date_saved')
+    can_delete = False
+    show_change_link = True
+    ordering = ['-date_saved']
+
 
 # UserProfile Admin
 @admin.register(UserProfile)
@@ -52,6 +64,14 @@ class UserProfileAdmin(admin.ModelAdmin):
         return obj.user.date_joined.strftime('%Y-%m-%d %H:%M:%S')
     get_date_joined.admin_order_field = 'user__date_joined'
     get_date_joined.short_description = 'Date Joined'
+
+    def get_total_savings(self, obj):
+        total = SavingsTransaction.objects.filter(user_profile=obj).aggregate(
+            total=Sum('amount'))['total'] or 0
+        return f"UGX {total:,.0f}"
+    get_total_savings.short_description = "Cumulative Savings"
+
+    inlines = [SavingsTransactionInline]
 
 # SavingsTransaction Admin
 @admin.register(SavingsTransaction)
