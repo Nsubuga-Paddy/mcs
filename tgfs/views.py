@@ -144,7 +144,8 @@ def member_dashboard_view(request):
     ).order_by('-date_saved')
     
     # Get latest transaction for current state
-    latest_txn = transactions.first()
+    latest_txn = transactions.order_by('-next_week', '-date_saved').first()
+
 
     if latest_txn:
         total_saved = float(latest_txn.cumulative_total)
@@ -299,7 +300,8 @@ def search_members(request):
                 user_profile=profile
             ).order_by('-date_saved')
 
-            latest_txn = transactions.first()
+            latest_txn = transactions.order_by('-next_week', '-date_saved').first()
+
             total_saved = float(latest_txn.cumulative_total) if latest_txn else 0
             fully_covered_weeks = latest_txn.fully_covered_weeks if latest_txn else []
             last_contribution = localtime(latest_txn.date_saved).strftime('%b %d, %Y') if latest_txn else "N/A"
@@ -332,7 +334,8 @@ def all_members_data(request):
             user_profile=profile
         ).order_by('-date_saved')
 
-        latest_txn = transactions.first()
+        latest_txn = transactions.order_by('-next_week', '-date_saved').first()
+
         total_saved = float(latest_txn.cumulative_total) if latest_txn else 0
         fully_covered_weeks = latest_txn.fully_covered_weeks if latest_txn else []
 

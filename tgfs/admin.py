@@ -116,17 +116,41 @@ class SavingsTransactionAdmin(admin.ModelAdmin):
     )
 
     def save_model(self, request, obj, form, change):
-        if not change:  # If this is a new transaction
-            # Process the deposit using our logic
-            from .views import process_user_deposit
-            result = process_user_deposit(obj.user_profile, obj.amount)
-            
-            # Update the object with the results
-            obj.fully_covered_weeks = result['fully_covered_weeks']
-            obj.next_week = result['next_week']
-            obj.remaining_balance = result['remaining_balance']
-            obj.cumulative_total = result['cumulative_total']
+        # Always recalculate everything from scratch
+        from .models import SavingsTransaction
+        from .views import evaluate_deposit, get_weekly_targets
+
+        # Recalculate all transactions in ascending order by date_saved
+        previous_transactions = SavingsTransaction.objects.filter(
+            user_profile=obj.user_profile
+        ).exclude(pk=obj.pk).order_by('date_saved')
+
+
+        cumulative_total = 0
+        carry_forward = 0
+        current_week = 1
+
+        # Recalculate all prior transactions first
+        for txn in previous_transactions:
+            result = evaluate_deposit(txn.amount, current_week, carry_forward)
+            cumulative_total += txn.amount
+            txn.fully_covered_weeks = result['fully_covered_weeks']
+            txn.next_week = result['next_week']
+            txn.remaining_balance = result['remaining_balance']
+            txn.cumulative_total = cumulative_total
+            carry_forward = float(txn.remaining_balance)
+            current_week = result['next_week']
+            txn.save()
+
+        # Now calculate for the current (new or edited) transaction
+        result = evaluate_deposit(obj.amount, current_week, carry_forward)
+        cumulative_total += obj.amount
+        obj.fully_covered_weeks = result['fully_covered_weeks']
+        obj.next_week = result['next_week']
+        obj.remaining_balance = result['remaining_balance']
+        obj.cumulative_total = cumulative_total
 
         super().save_model(request, obj, form, change)
+
         
        
