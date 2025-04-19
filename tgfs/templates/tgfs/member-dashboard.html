@@ -184,10 +184,11 @@
               <div class="col-md-3">
                 <div class="card">
                   <div class="card-body">
-                    <h6 class="card-subtitle mb-2 text-muted">
-                      Amount Invested
-                    </h6>
-                    <h3 class="card-title">UGX 0</h3>
+                    <h6 class="card-subtitle mb-2 text-muted">Amount Invested</h6>
+                    <h3 class="card-title">
+                      UGX {{ investment_summary.total_invested|intcomma }}
+                    </h3>
+                    <small class="text-muted">Uninvested: UGX {{ investment_summary.available_balance|intcomma }}</small>
                   </div>
                 </div>
               </div>
@@ -196,14 +197,14 @@
               <div class="col-md-3">
                 <div class="card">
                   <div class="card-body">
-                    <h6 class="card-subtitle mb-2 text-muted">
-                      Interest Earned
-                    </h6>
-                    <h3 class="card-title">UGX 0</h3>
+                    <h6 class="card-subtitle mb-2 text-muted">Interest to be Earned</h6>
+                    <h3 class="card-title">
+                      UGX {{ investment_summary.interest_expected|floatformat:1|intcomma }}
+                    </h3>
+                    <small class="text-muted">Interest Earned: UGX {{ investment_summary.interest_gained|floatformat:1|intcomma }}</small>
                   </div>
                 </div>
               </div>
-            </div>
 
             <!-- Investment Information Alert -->
             <div class="alert alert-info mt-4" role="alert">
@@ -235,29 +236,29 @@
                         <th>Amount</th>
                         <th>Interest Rate</th>
                         <th>Interest Earned</th>
-                        <th>Status</th>
+                        <th>Expected Interest</th>
                         <th>Maturity Date</th>
+                        <th>Status</th>
                       </tr>
                     </thead>
                     <tbody>
                       {% for investment in investments %}
                       <tr>
-                        <td>{{ investment.date_invested }}</td>
-                        <td>UGX {{ investment.amount|intcomma }}</td>
+                        <td>{{ investment.date_invested|date:"M d, Y" }}</td>
+                        <td>UGX {{ investment.amount_invested|floatformat:1|intcomma }}</td>
                         <td>{{ investment.interest_rate }}%</td>
-                        <td>UGX {{ investment.interest_earned|intcomma }}</td>
+                        <td>UGX {{ investment.interest_gained_so_far|floatformat:1|intcomma }}</td>
+                        <td>UGX {{ investment.interest_expected|floatformat:1|intcomma }}</td>
+                        <td>{{ investment.maturity_date|date:"M d, Y" }}</td>
                         <td>
-                          <span
-                            class="badge {% if investment.status == 'Active' %}bg-success{% else %}bg-secondary{% endif %}"
-                          >
-                            {{ investment.status }}
+                          <span class="badge {% if investment.maturity_date > now %}bg-success{% else %}bg-secondary{% endif %}">
+                            {% if investment.maturity_date > now %}Active{% else %}Matured{% endif %}
                           </span>
                         </td>
-                        <td>{{ investment.maturity_date }}</td>
                       </tr>
                       {% empty %}
                       <tr>
-                        <td colspan="6" class="text-center">
+                        <td colspan="7" class="text-center">
                           No investments found
                         </td>
                       </tr>

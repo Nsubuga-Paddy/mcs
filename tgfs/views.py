@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.forms import AuthenticationForm
 from .forms import SignUpForm, CustomAuthenticationForm
-from .models import SavingsTransaction, UserProfile
+from .models import SavingsTransaction, UserProfile, Investment
 from django.db.models import Max, Sum, Count, Q
 import json
 from django.core.paginator import Paginator
@@ -16,6 +16,7 @@ import csv
 from django.http import HttpResponse, JsonResponse
 from datetime import datetime
 from django.utils.timezone import localtime
+from django.utils import timezone
 
 def index(request):
     return render(request, 'tgfs/index.html')
@@ -134,6 +135,7 @@ def process_user_deposit(user_profile, deposit_amount):
 
 
 
+"""
 @login_required
 def member_dashboard_view(request):
     user_profile = UserProfile.objects.get(user=request.user)
@@ -202,7 +204,129 @@ def member_dashboard_view(request):
         }))
     }
 
+    return render(request, 'tgfs/member-dashboard.html', context) 
+"""
+
+
+@login_required
+def member_dashboard_view(request):
+    user_profile = UserProfile.objects.get(user=request.user)
+    
+    # Get all transactions ordered by date
+    transactions = SavingsTransaction.objects.filter(
+        user_profile=user_profile
+    ).order_by('-date_saved')
+    
+    # Get latest transaction for current state
+    latest_txn = transactions.order_by('-next_week', '-date_saved').first()
+
+    if latest_txn:
+        total_saved = float(latest_txn.cumulative_total)
+        current_week = latest_txn.next_week
+        carry_forward = float(latest_txn.remaining_balance)
+    else:
+        total_saved = 0
+        current_week = 1
+        carry_forward = 0
+
+    progress_percentage = round((total_saved / 13780000) * 100, 2)
+
+    weekly_targets = get_weekly_targets()
+    current_week_target = weekly_targets[current_week - 1] if current_week <= 52 else 0
+
+    updated_transactions = []
+    for t in transactions:
+        if t.fully_covered_weeks:
+            weeks_text = "Weeks: " + ", ".join(map(str, t.fully_covered_weeks))
+            status = 'Complete'
+        else:
+            weeks_text = "No weeks fully covered"
+            status = 'Partial'
+        
+        updated_transactions.append({
+            'date_saved': t.date_saved.strftime('%b %d, %Y'),
+            'amount': float(t.amount),
+            'cumulative_total': float(t.cumulative_total),
+            'weeks_covered': weeks_text,
+            'status': status,
+            'remaining_balance': float(t.remaining_balance)
+        })
+
+    # Get investments
+    investments = Investment.objects.filter(user_profile=user_profile)
+    investment_data = []
+    total_invested = 0
+    total_interest_expected = 0
+    total_interest_gained = 0
+
+    for inv in investments:
+        invested = float(inv.amount_invested)
+        expected = float(inv.interest_expected)
+        gained = float(inv.interest_gained_so_far)
+
+        investment_data.append({
+            'date': inv.date_invested.strftime('%b %d, %Y'),
+            'amount': invested,
+            'rate': inv.interest_rate,
+            'interest_so_far': gained,
+            'expected_interest': expected,
+            'maturity_date': inv.maturity_date.strftime('%b %d, %Y')
+        })
+
+        total_invested += invested
+        total_interest_expected += expected
+        total_interest_gained += gained
+
+    available_balance = total_saved - total_invested
+
+    # Calculate progress width for progress bar
+    if total_invested > 0:
+        progress_width = round((available_balance / total_invested) * 100, 2)
+    else:
+        progress_width = 0
+
+    context = {
+        'savings_data': {
+            'total_saved': total_saved,
+            'current_week': current_week,
+            'carry_forward': carry_forward,
+            'target_amount': 13780000,
+            'progress_percentage': progress_percentage,
+            'current_week_target': current_week_target
+        },
+        'transactions': updated_transactions,  # still using structured list
+        'investments': investments,  # pass raw model instances for maturity_date comparison
+        'investment_summary': {
+            'total_invested': total_invested,
+            'interest_expected': total_interest_expected,
+            'interest_gained': total_interest_gained,
+            'available_balance': available_balance,
+            'progress_width': progress_width
+        },
+        'now': timezone.now(),  # Use timezone-aware datetime
+        'member_data_json': mark_safe(json.dumps({
+            'totalSaved': total_saved,
+            'currentWeek': current_week,
+            'carryForward': carry_forward,
+            'targetAmount': 13780000,
+            'progressPercentage': progress_percentage,
+            'transactions': updated_transactions,
+            'investments': investment_data,
+            'investmentSummary': {
+                'totalInvested': total_invested,
+                'interestExpected': total_interest_expected,
+                'interestGained': total_interest_gained,
+                'availableBalance': available_balance
+            }
+        }))
+    }
+
     return render(request, 'tgfs/member-dashboard.html', context)
+
+
+
+
+
 
 @login_required
 def members_view(request):

@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User
 from django.db.models import Sum
-from .models import UserProfile, SavingsTransaction
+from .models import UserProfile, SavingsTransaction, Investment
 from django.utils.html import format_html
 
 # Inline UserProfile Editing inside User Admin Panel
@@ -152,5 +152,12 @@ class SavingsTransactionAdmin(admin.ModelAdmin):
 
         super().save_model(request, obj, form, change)
 
-        
+
+@admin.register(Investment)
+class InvestmentAdmin(admin.ModelAdmin):
+    list_display = ('user_profile', 'amount_invested', 'interest_rate', 'maturity_months', 'date_invested', 'maturity_date', 'interest_expected', 'interest_gained_so_far')
+    list_filter = ('date_invested', 'maturity_months')
+    search_fields = ('user_profile__user__username', 'user_profile__user__first_name')
+    autocomplete_fields = ('user_profile',)
+
        
