@@ -65,13 +65,65 @@ def dashboard_view(request):
     total_group_savings = SavingsTransaction.objects.aggregate(
         total=Sum('amount'))['total'] or Decimal('0')
 
-    total_group_savings_float = float(total_group_savings)
+    # Calculate total amount invested across all users
+    total_invested = Investment.objects.aggregate(
+        total=Sum('amount_invested'))['total'] or Decimal('0')
+
+    # Calculate total interest gained by iterating through investments
+    total_interest = Decimal('0')
+    investments = Investment.objects.all()
+    for investment in investments:
+        total_interest += investment.interest_gained_so_far
+
+    # Calculate uninvested amount
+    uninvested = total_group_savings - total_invested
+
+    # Get investment pools data - aggregated by date
+    investment_pools = []
+    investments_by_date = {}
+    
+    for investment in investments:
+        date_key = investment.date_invested.strftime('%Y-%m-%d')
+        if date_key not in investments_by_date:
+            investments_by_date[date_key] = {
+                'investment_date': investment.date_invested.strftime('%b %d, %Y'),
+                'amount': float(investment.amount_invested),
+                'member_count': 1,
+                'interest_earned': float(investment.interest_gained_so_far),
+                'maturity_date': investment.maturity_date.strftime('%b %d, %Y'),
+                'status': 'Active' if investment.maturity_date > timezone.now().date() else 'Matured',
+                'members': {investment.user_profile.id}
+            }
+        else:
+            pool = investments_by_date[date_key]
+            pool['amount'] += float(investment.amount_invested)
+            pool['interest_earned'] += float(investment.interest_gained_so_far)
+            pool['members'].add(investment.user_profile.id)
+            pool['member_count'] = len(pool['members'])
+            # Update status if any investment is still active
+            if investment.maturity_date > timezone.now().date():
+                pool['status'] = 'Active'
+
+    # Convert the dictionary to a list and sort by date
+    investment_pools = list(investments_by_date.values())
+    # Remove the members set before sorting
+    for pool in investment_pools:
+        del pool['members']
+    investment_pools.sort(key=lambda x: x['investment_date'], reverse=True)
 
     # Pass data to both Python and JavaScript contexts
     context = {
-        'total_group_savings': total_group_savings_float,
+        'total_group_savings': float(total_group_savings),
+        'total_invested': float(total_invested),
+        'total_interest': float(total_interest),
+        'uninvested': float(uninvested),
+        'investment_pools': investment_pools,
         'dashboard_data': mark_safe(json.dumps({
-            'total_group_savings': total_group_savings_float
+            'total_group_savings': float(total_group_savings),
+            'totalInvested': float(total_invested),
+            'interestGained': float(total_interest),
+            'uninvested': float(uninvested),
+            'investment_pools': investment_pools
         }))
     }
     
@@ -135,79 +187,6 @@ def process_user_deposit(user_profile, deposit_amount):
 
 
 
-"""
-@login_required
-def member_dashboard_view(request):
-    user_profile = UserProfile.objects.get(user=request.user)
-    
-    # Get all transactions ordered by date
-    transactions = SavingsTransaction.objects.filter(
-        user_profile=user_profile
-    ).order_by('-date_saved')
-    
-    # Get latest transaction for current state
-    latest_txn = transactions.order_by('-next_week', '-date_saved').first()
-
-
-    if latest_txn:
-        total_saved = float(latest_txn.cumulative_total)
-        current_week = latest_txn.next_week
-        carry_forward = float(latest_txn.remaining_balance)
-    else:
-        total_saved = 0
-        current_week = 1
-        carry_forward = 0
-
-    progress_percentage = round((total_saved / 13780000) * 100, 2)
-
-    # Example of how the progressive calculation works
-    weekly_targets = get_weekly_targets()
-    current_week_target = weekly_targets[current_week - 1] if current_week <= 52 else 0
-
-    # Prepare transaction data for display
-    updated_transactions = []
-    for t in transactions:
-        # Format weeks covered for display
-        if t.fully_covered_weeks:
-            weeks_text = "Weeks: " + ", ".join(map(str, t.fully_covered_weeks))
-            status = 'Complete'
-        else:
-            weeks_text = "No weeks fully covered"
-            status = 'Partial'
-        
-        updated_transactions.append({
-            'date_saved': t.date_saved.strftime('%b %d, %Y'),
-            'amount': float(t.amount),
-            'cumulative_total': float(t.cumulative_total),
-            'weeks_covered': weeks_text,
-            'status': status,
-            'remaining_balance': float(t.remaining_balance)
-        })
-
-    context = {
-        'savings_data': {
-            'total_saved': total_saved,
-            'current_week': current_week,
-            'carry_forward': carry_forward,
-            'target_amount': 13780000,
-            'progress_percentage': progress_percentage,
-            'current_week_target': current_week_target  # Show target for current week
-        },
-        'transactions': updated_transactions,
-        'member_data_json': mark_safe(json.dumps({
-            'totalSaved': total_saved,
-            'currentWeek': current_week,
-            'carryForward': carry_forward,
-            'targetAmount': 13780000,
-            'progressPercentage': progress_percentage,
-            'transactions': updated_transactions
-        }))
-    }
-
-    return render(request, 'tgfs/member-dashboard.html', context) 
-"""
-
-
 @login_required
 def member_dashboard_view(request):
     user_profile = UserProfile.objects.get(user=request.user)
@@ -238,17 +217,18 @@ def member_dashboard_view(request):
     for t in transactions:
         if t.fully_covered_weeks:
             weeks_text = "Weeks: " + ", ".join(map(str, t.fully_covered_weeks))
-            status = 'Complete'
+            #status = 'Complete'
         else:
             weeks_text = "No weeks fully covered"
-            status = 'Partial'
+            #status = 'Partial'
         
         updated_transactions.append({
             'date_saved': t.date_saved.strftime('%b %d, %Y'),
             'amount': float(t.amount),
+            'receipt_number': t.receipt_number,
             'cumulative_total': float(t.cumulative_total),
             'weeks_covered': weeks_text,
-            'status': status,
+            #'status': status,
             'remaining_balance': float(t.remaining_balance)
         })
 
@@ -322,9 +302,6 @@ def member_dashboard_view(request):
     }
 
     return render(request, 'tgfs/member-dashboard.html', context)
-
-
-
 
 
 

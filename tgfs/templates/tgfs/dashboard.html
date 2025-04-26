@@ -1,4 +1,4 @@
-{% load static %}
+{% load static %} {% load humanize %}
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -200,18 +200,40 @@
                           </tr>
                         </thead>
                         <tbody id="investmentPoolsBody">
+                          {% for pool in investment_pools %}
+                          <tr>
+                            <td>{{ pool.investment_date }}</td>
+                            <td>UGX {{ pool.amount|intcomma }}</td>
+                            <td>{{ pool.member_count }} members</td>
+                            <td>
+                              UGX {{ pool.interest_earned|floatformat:1|intcomma
+                              }}
+                            </td>
+                            <td>{{ pool.maturity_date }}</td>
+                            <td>
+                              <span
+                                class="badge {% if pool.status == 'Active' %}bg-success{% else %}bg-secondary{% endif %}"
+                              >
+                                {{ pool.status }}
+                              </span>
+                            </td>
+                          </tr>
+                          {% empty %}
                           <tr>
                             <td colspan="6" class="text-center">
                               No investment pools found
                             </td>
                           </tr>
+                          {% endfor %}
                         </tbody>
                         <tfoot>
                           <tr class="table-light">
                             <td><strong>Totals</strong></td>
-                            <td>UGX 0</td>
+                            <td>UGX {{ total_invested|intcomma }}</td>
                             <td>-</td>
-                            <td>UGX 0</td>
+                            <td>
+                              UGX {{ total_interest|floatformat:1|intcomma }}
+                            </td>
                             <td>-</td>
                             <td>-</td>
                           </tr>

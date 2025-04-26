@@ -1,7 +1,7 @@
 from decimal import Decimal
 from phonenumber_field.modelfields import PhoneNumberField
 from django.contrib.auth.models import User
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Sum
 from django.utils import timezone
 from datetime import timedelta
@@ -12,20 +12,54 @@ import math
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
+    account_number = models.CharField(
+        max_length=20,
+        unique=True,
+        blank=True,
+        null=True,
+        help_text="Auto-generated: MCSTGF-<Initials><0001…>"
+    )
     whatsapp_number = PhoneNumberField(region="UG", unique=True, null=True, blank=True, default="")
     is_verified = models.BooleanField(default=False)
-
-    def __str__(self):
-        return self.user.username
 
     def get_total_savings(self):
         return self.savings_transactions.aggregate(total=Sum('amount'))['total'] or Decimal(0)
 
 
+    def save(self, *args, **kwargs):
+        # only generate once, when empty
+        if not self.account_number:
+            initials = (
+                f"{self.user.last_name[:1]}{self.user.first_name[:1]}"
+            ).upper()            # e.g. "NP"
+            prefix   = "MCSTGF"
+
+            # count how many joined earlier
+            earlier = UserProfile.objects.filter(
+                user__date_joined__lt=self.user.date_joined
+            ).count()
+            seq = earlier + 1     # 1-based
+            seq_str = str(seq).zfill(4)    # "0001", "0002", …
+
+            self.account_number = f"{prefix}-{initials}{seq_str}"
+
+            # Use an atomic block so that two simultaneous saves don’t collide
+            with transaction.atomic():
+                super().save(*args, **kwargs)
+        else:
+            super().save(*args, **kwargs)
+
+
+    def __str__(self):
+        return self.user.username
+
+    
+
 
 class SavingsTransaction(models.Model):
     user_profile = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='savings_transactions')
     amount = models.PositiveIntegerField(default=0)
+    receipt_number = models.CharField(max_length=20, blank=True, null=True, help_text="Receipt number for this deposit")
     date_saved = models.DateTimeField(default=timezone.now)
     
     cumulative_total = models.DecimalField(max_digits=10, decimal_places=2, default=0)

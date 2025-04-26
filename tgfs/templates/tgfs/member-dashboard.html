@@ -28,6 +28,18 @@
     <link rel="icon" type="image/png" href="favicon.png" />
     <!-- Custom CSS -->
     <link href="{% static 'tgfs/css/styles.css' %}" rel="stylesheet" />
+    <style>
+      .btn-light-orange {
+        background-color: #ffd699;
+        border-color: #ffd699;
+        color: #000;
+      }
+      .btn-light-orange:hover {
+        background-color: #ffc266;
+        border-color: #ffc266;
+        color: #000;
+      }
+    </style>
 
     <!-- DataTables CSS -->
     <link
@@ -135,6 +147,14 @@
                   <i class="fas fa-chart-line me-2"></i>Tracking your savings
                   progress and investments
                 </p>
+              </div>
+              <div class="ms-auto text-end">
+                <div class="d-flex align-items-center">
+                  <div class="me-3">
+                    <small class="text-muted d-block">Account Number:</small>
+                    <span class="fw-bold" style="color: #ff6b00">{{ request.user.userprofile.account_number }}</span>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -266,6 +286,48 @@
                     </tbody>
                   </table>
                 </div>
+
+                <!-- Pagination Controls -->
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                  <div class="text-muted">
+                    Showing {{ investments.start_index }} to {{ investments.end_index }} of {{ investments.paginator.count }} entries
+                  </div>
+                  <nav aria-label="Investment pagination">
+                    <ul class="pagination mb-0">
+                      {% if investments.has_previous %}
+                      <li class="page-item">
+                        <a class="page-link" href="?page={{ investments.previous_page_number }}" aria-label="Previous">
+                          <span aria-hidden="true">Previous</span>
+                        </a>
+                      </li>
+                      {% else %}
+                      <li class="page-item disabled">
+                        <span class="page-link" aria-hidden="true">Previous</span>
+                      </li>
+                      {% endif %}
+
+                      {% for num in investments.paginator.page_range %}
+                      {% if investments.number == num %}
+                      <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                      {% else %}
+                      <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                      {% endif %}
+                      {% endfor %}
+
+                      {% if investments.has_next %}
+                      <li class="page-item">
+                        <a class="page-link" href="?page={{ investments.next_page_number }}" aria-label="Next">
+                          <span aria-hidden="true">Next</span>
+                        </a>
+                      </li>
+                      {% else %}
+                      <li class="page-item disabled">
+                        <span class="page-link" aria-hidden="true">Next</span>
+                      </li>
+                      {% endif %}
+                    </ul>
+                  </nav>
+                </div>
               </div>
             </div>
 
@@ -290,8 +352,8 @@
                         <th>Date Saved</th>
                         <th>Amount Deposited</th>
                         <th>Cumulative Total</th>
-                        <th>Weeks Covered</th>
-                        <th>Status</th>
+                        <th>Weeks Fully Covered</th>
+                        <th>Receipt N.O</th>
                         <th>Balance Forward</th>
                       </tr>
                     </thead>
@@ -303,11 +365,7 @@
                         <td>UGX {{ transaction.cumulative_total|intcomma }}</td>
                         <td>{{ transaction.weeks_covered }}</td>
                         <td>
-                          <span
-                            class="badge {% if transaction.status == 'Complete' %}bg-success{% else %}bg-warning{% endif %}"
-                          >
-                            {{ transaction.status }}
-                          </span>
+                          <span class="badge bg-warning">{{ transaction.receipt_number|default:"-" }}</span>
                         </td>
                         <td>
                           UGX {{ transaction.remaining_balance|intcomma }}
@@ -323,15 +381,61 @@
                     </tbody>
                   </table>
                 </div>
+
+                <!-- Pagination Controls -->
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                  <div class="text-muted">
+                    Showing {{ transactions.start_index }} to {{ transactions.end_index }} of {{ transactions.paginator.count }} entries
+                  </div>
+                  <nav aria-label="Savings pagination">
+                    <ul class="pagination mb-0">
+                      {% if transactions.has_previous %}
+                      <li class="page-item">
+                        <a class="page-link" href="?page={{ transactions.previous_page_number }}" aria-label="Previous">
+                          <span aria-hidden="true">Previous</span>
+                        </a>
+                      </li>
+                      {% else %}
+                      <li class="page-item disabled">
+                        <span class="page-link" aria-hidden="true">Previous</span>
+                      </li>
+                      {% endif %}
+
+                      {% for num in transactions.paginator.page_range %}
+                      {% if transactions.number == num %}
+                      <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                      {% else %}
+                      <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                      {% endif %}
+                      {% endfor %}
+
+                      {% if transactions.has_next %}
+                      <li class="page-item">
+                        <a class="page-link" href="?page={{ transactions.next_page_number }}" aria-label="Next">
+                          <span aria-hidden="true">Next</span>
+                        </a>
+                      </li>
+                      {% else %}
+                      <li class="page-item disabled">
+                        <span class="page-link" aria-hidden="true">Next</span>
+                      </li>
+                      {% endif %}
+                    </ul>
+                  </nav>
+                </div>
               </div>
             </div>
+
 
             <script>
               document.addEventListener("DOMContentLoaded", function () {
                 $("#savingsHistoryTable").DataTable({
-                  pageLength: 5, // or 10
+                  pageLength: 10,
                   lengthChange: false,
-                  ordering: false, // optional: disable sorting
+                  ordering: false,
+                  searching: false,
+                  info: false,
+                  paging: false
                 });
               });
             </script>
@@ -352,6 +456,7 @@
       // Make data available to JavaScript
       window.memberData = {{ member_data_json|safe }};
     </script>
+
     <script src="{% static 'tgfs/js/script.js' %}"></script>
   </body>
 </html>

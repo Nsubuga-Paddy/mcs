@@ -10,7 +10,8 @@ class UserProfileInline(admin.StackedInline):
     model = UserProfile
     can_delete = False
     verbose_name_plural = 'Profile'
-    fields = ('whatsapp_number', 'is_verified')
+    fields = ('account_number', 'whatsapp_number', 'is_verified')
+    readonly_fields = ('account_number',)
 
 class CustomUserAdmin(UserAdmin):
     inlines = (UserProfileInline,)
@@ -22,8 +23,24 @@ admin.site.register(User, CustomUserAdmin)
 class SavingsTransactionInline(admin.TabularInline):
     model = SavingsTransaction
     extra = 0
-    readonly_fields = ('amount', 'cumulative_total', 'fully_covered_weeks', 
-                       'next_week', 'remaining_balance', 'date_saved')
+    fields = (
+       'date_saved',
+        'amount',
+        'receipt_number',
+        'cumulative_total',
+        'fully_covered_weeks',        
+        'next_week',
+        'remaining_balance',
+    )
+    readonly_fields = (
+        'amount',
+        'cumulative_total',
+        'fully_covered_weeks',
+        'next_week',
+        'remaining_balance',
+        'date_saved',
+    )
+    
     can_delete = False
     show_change_link = True
     ordering = ['-date_saved']
@@ -32,7 +49,7 @@ class SavingsTransactionInline(admin.TabularInline):
 # UserProfile Admin
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
-    list_display = ('user', 'user_username', 'get_first_name', 'get_last_name', 
+    list_display = ('user', 'user_username', 'account_number', 'get_first_name', 'get_last_name', 
                    'get_email', 'whatsapp_number', 'is_verified', 'get_date_joined')
     search_fields = ('user__username', 'user__email', 'whatsapp_number')
     list_filter = ('is_verified', 'user__is_active', 'user__date_joined')
@@ -76,11 +93,15 @@ class UserProfileAdmin(admin.ModelAdmin):
 # SavingsTransaction Admin
 @admin.register(SavingsTransaction)
 class SavingsTransactionAdmin(admin.ModelAdmin):
-    list_display = ('user_profile', 'formatted_amount', 'formatted_weeks', 
+    list_display = ('user_profile', 'formatted_amount', 'receipt_number', 'formatted_weeks', 
                    'formatted_next_week', 'formatted_balance', 'date_saved')
+    
     list_filter = ('date_saved', 'user_profile__user__is_active')
+    
     search_fields = ('user_profile__user__username', 'user_profile__user__first_name')
+    
     date_hierarchy = 'date_saved'
+    
     autocomplete_fields = ('user_profile',)
     
     readonly_fields = ('cumulative_total', 'fully_covered_weeks', 'next_week', 
@@ -107,7 +128,7 @@ class SavingsTransactionAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ('Basic Information', {
-            'fields': ('user_profile', 'amount')
+            'fields': ('user_profile', 'amount', 'receipt_number')
         }),
         ('Progress Details', {
             'fields': ('date_saved', 'cumulative_total', 'fully_covered_weeks', 
